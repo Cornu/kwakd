@@ -1,3 +1,8 @@
+Fork of kwakd with added address:port flag to bind to a
+specific interface. (https://code.google.com/p/kwakd/)
+
+---
+
 Kwakd is a very small foot print web server written in C
 that serves blank html pages for any request. The request
 can be arbitrary, may even be invalid, but only its first

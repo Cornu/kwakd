@@ -58,7 +58,8 @@ static void help( void )
     printf( "  Serve a blank html page for any request\n\n" );
     printf( "  -b, --background     background mode (disables console output, and allows\n" );
     printf( "                       multiple requests to be served simultaneously)\n" );
-    printf( "  -p, --port           port to listen for requests on, defaults to 8000\n" );
+    printf( "  -p, --port           port to listen for requests on (and optionally address),\n" );
+    printf( "                       defaults to port 8000 (on all interfaces)\n" );
     printf( "  -v, --verbose        verbose output\n" );
     printf( "  -q, --quiet          suppress any output\n" );
     printf( "  -V, --version        print version and exit\n" );
@@ -73,6 +74,8 @@ static void sigcatch( int signal );
 
 int main( int argc, char *argv[] )
 {
+    char *port_str = NULL;
+    char *addr_str = NULL;
     int port = 8000;
     struct sockaddr_in my_addr;
     struct sockaddr_in remote_addr;
@@ -95,8 +98,20 @@ int main( int argc, char *argv[] )
 	}
 	else if( ( strcmp( argv[i], "-p" ) == 0 ) || ( strcmp( argv[i], "--port" ) == 0 ) )
 	{
-	    port = atoi( argv[i + 1] );
-	    i++;
+        i++;
+        port_str = strchr( argv[i], ':' );
+        if( port_str == NULL )
+        {
+            /* no address */
+	        port = atoi( argv[i] );
+        }
+        else
+        {
+            *port_str = '\0';
+            port_str++;
+            addr_str = argv[i];
+            port = atoi( port_str );
+        }
 	}
 	else if( ( strcmp( argv[i], "-v" ) == 0 ) || ( strcmp( argv[i], "--verbose" ) == 0 ) )
 	{
@@ -150,7 +165,14 @@ int main( int argc, char *argv[] )
 
     my_addr.sin_family = AF_INET;
     my_addr.sin_port = htons( port );
-    my_addr.sin_addr.s_addr = INADDR_ANY;
+    if( addr_str == NULL )
+    {
+        my_addr.sin_addr.s_addr = INADDR_ANY;
+    }
+    else
+    {
+        inet_aton( addr_str, &my_addr.sin_addr );
+    }
     bzero( &( my_addr.sin_zero ), 8 );
 
     if( bind( sockfd, ( struct sockaddr * ) &my_addr, sizeof( struct sockaddr ) ) == -1 )
